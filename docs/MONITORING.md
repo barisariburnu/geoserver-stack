@@ -16,8 +16,7 @@ Bu dokümanda GeoServer kurulumunuzun izlenmesi ve performans metriklerinin topl
 ### 1. Stack'i Başlatma
 
 ```powershell
-cd D:\Workspace\geoserver\monitoring
-docker-compose -f docker-compose.monitoring.yml up -d
+docker-compose -f .\monitoring\docker-compose.monitoring.yml up -d
 ```
 
 ### 2. Erişim Kontrolleri
@@ -27,7 +26,7 @@ docker-compose -f docker-compose.monitoring.yml up -d
 docker ps | findstr "geoserver\|prometheus\|grafana\|cadvisor"
 
 # Logları görüntüle
-docker-compose -f docker-compose.monitoring.yml logs -f
+docker-compose -f .\monitoring\docker-compose.monitoring.yml logs -f
 ```
 
 ### 3. Web Arayüzleri
@@ -295,51 +294,6 @@ windows_logical_disk_free_bytes{volume="D:"} / 1024 / 1024 / 1024
 ```
 
 ## 📱 Custom Monitoring Scripts
-
-### PowerShell Monitoring Script
-
-`scripts/monitor.ps1`:
-
-```powershell
-# GeoServer Monitoring Script
-param(
-    [int]$Interval = 60,  # seconds
-    [string]$OutputFile = "monitoring-report.csv"
-)
-
-Write-Host "Starting GeoServer monitoring (Interval: ${Interval}s)" -ForegroundColor Cyan
-
-# CSV header
-"Timestamp,CPU%,Memory(GB),NetworkRx(MB/s),NetworkTx(MB/s),DiskRead(MB/s),DiskWrite(MB/s)" | Out-File $OutputFile
-
-while ($true) {
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    
-    # Get container stats
-    $stats = docker stats geoserver --no-stream --format "{{.CPUPerc}}|{{.MemUsage}}"
-    $statsArray = $stats -split '\|'
-    
-    $cpu = $statsArray[0] -replace '%', ''
-    $memory = ($statsArray[1] -split ' / ')[0] -replace 'GiB', ''
-    
-    # Network stats (simplified)
-    $netStats = docker exec geoserver cat /proc/net/dev | Select-String "eth0"
-    
-    # Output to CSV
-    "$timestamp,$cpu,$memory,0,0,0,0" | Out-File $OutputFile -Append
-    
-    Write-Host "[$timestamp] CPU: $cpu% | Memory: ${memory}GB" -ForegroundColor Gray
-    
-    Start-Sleep -Seconds $Interval
-}
-```
-
-Kullanım:
-
-```powershell
-# Background'da çalıştır
-Start-Process powershell -ArgumentList "-File .\scripts\monitor.ps1" -WindowStyle Hidden
-```
 
 ## 📊 Log Analizi
 

@@ -1,396 +1,277 @@
-# GeoServer Docker Kurulum Rehberi
+# GeoServer Stack
 
-Windows x64 sunucusuna yüksek performanslı GeoServer kurulumu için Docker tabanlı çözüm.
+Production-ready, performance-optimized GeoServer deployment using Docker. Pre-configured with JAI-EXT, GeoWebCache, and enterprise-grade JVM tuning.
 
-## 📋 İçindekiler
+## 🎯 Features
 
-- [Ön Gereksinimler](#ön-gereksinimler)
-- [Hızlı Başlangıç](#hızlı-başlangıç)
-- [Konfigürasyon](#konfigürasyon)
-- [Kullanım](#kullanım)
-- [Performans Optimizasyonu](#performans-optimizasyonu)
-- [Güvenlik](#güvenlik)
-- [Monitoring](#monitoring)
-- [Yedekleme ve Kurtarma](#yedekleme-ve-kurtarma)
-- [Sorun Giderme](#sorun-giderme)
+- **High Performance**: JVM G1GC tuning, JAI-EXT for raster processing, optimized tile caching
+- **Production Ready**: Health checks, persistent storage, automated backups
+- **Scalable**: Connection pooling, control flow, resource limits
+- **Monitoring**: Prometheus/Grafana integration ready
+- **Docker-based**: Platform-agnostic, easy deployment
 
-## 🔧 Ön Gereksinimler
+## 🚀 Quick Start
 
-### Donanım Gereksinimleri
+### Prerequisites
 
-- **RAM**: Minimum 16GB (Önerilen: 32GB)
-- **Disk**: SSD tabanlı depolama, D:\ sürücüsünde en az 50GB boş alan
-- **CPU**: 4+ core işlemci
+- Docker & Docker Compose
+- Minimum 8GB RAM (16GB recommended)
+- SSD storage recommended
 
-### Yazılım Gereksinimleri
+### Installation
 
-1. **Docker Desktop for Windows**
-   - [Docker Desktop](https://www.docker.com/products/docker-desktop/) en son sürümü
-   - WSL2 backend etkin olmalı
-   
-   ```powershell
-   # Docker sürümünü kontrol edin
-   docker --version
-   docker-compose --version
-   ```
+```bash
+# Clone or download this repository
+git clone https://github.com/barisariburnu/geoserver-stack.git
+cd geoserver-stack
 
-2. **Windows PowerShell** (5.1 veya üzeri)
+# Create environment file
+cp .env.example .env
 
-### Ön Kontroller
+# Edit .env and set a strong admin password
+nano .env  # or vim, code, etc.
 
-```powershell
-# Sistem bilgilerini kontrol edin
-systeminfo | findstr /C:"Total Physical Memory"
-
-# Docker çalışıyor mu?
-docker ps
-
-# WSL2 etkin mi?
-wsl --list --verbose
-```
-
-## 🚀 Hızlı Başlangıç
-
-### 1. Projeyi Klonlayın veya İndirin
-
-```powershell
-cd D:\Workspace
-git clone <repo-url> geoserver
-cd geoserver
-```
-
-### 2. Environment Dosyasını Yapılandırın
-
-```powershell
-# .env.example dosyasını kopyalayın
-Copy-Item .env.example .env
-
-# .env dosyasını düzenleyin (özellikle admin şifresini değiştirin!)
-notepad .env
-```
-
-> [!CAUTION]
-> **MUTLAKA** `GEOSERVER_ADMIN_PASSWORD` değerini güçlü bir şifre ile değiştirin!
-
-### 3. Veri Dizinini Oluşturun
-
-```powershell
-# D:\ sürücüsünde veri dizini oluşturun
-New-Item -ItemType Directory -Path "D:\geoserver_data" -Force
-```
-
-### 4. GeoServer'ı Başlatın
-
-```powershell
-# Docker container'ı başlatın
+# Start GeoServer
 docker-compose up -d
 
-# Logları izleyin
+# Check logs
 docker-compose logs -f geoserver
 ```
 
-### 5. Erişimi Doğrulayın
+### First Access
 
-Tarayıcınızda şu adresi açın: [http://localhost:8080/geoserver](http://localhost:8080/geoserver)
+Open http://localhost:8080/geoserver
 
-- **Kullanıcı Adı**: `.env` dosyasında tanımladığınız `GEOSERVER_ADMIN_USER` (varsayılan: admin)
-- **Şifre**: `.env` dosyasında tanımladığınız `GEOSERVER_ADMIN_PASSWORD`
+- **Username**: `admin` (or from `.env`)
+- **Password**: Set in `.env` file
 
-## ⚙️ Konfigürasyon
+> **⚠️ IMPORTANT**: Change the default admin password immediately!
 
-### Environment Değişkenleri
+## ⚙️ Configuration
 
-`.env` dosyasındaki önemli ayarlar:
+### Environment Variables
 
-| Değişken | Açıklama | Varsayılan |
-|----------|----------|------------|
-| `GEOSERVER_ADMIN_USER` | Admin kullanıcı adı | admin |
-| `GEOSERVER_ADMIN_PASSWORD` | Admin şifresi | **MUTLAKA DEĞİŞTİRİN** |
-| `INITIAL_MEMORY` | JVM başlangıç heap | 8G |
-| `MAXIMUM_MEMORY` | JVM maksimum heap | 12G |
-| `SAMPLE_DATA` | Demo veri yükleme | false |
-| `STABLE_EXTENSIONS` | Kurulacak eklentiler | (boş) |
+Key settings in `.env`:
 
-### JVM Ayarları
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GEOSERVER_ADMIN_PASSWORD` | - | **REQUIRED** Admin password |
+| `INITIAL_MEMORY` | 8G | JVM initial heap |
+| `MAXIMUM_MEMORY` | 12G | JVM maximum heap |
+| `STABLE_EXTENSIONS` | jai-ext,pyramid-plugin,... | Performance extensions |
+| `SAMPLE_DATA` | false | Disable demo data |
 
-16GB RAM için optimize edilmiş ayarlar `docker-compose.yml` dosyasında:
+### Memory Configuration
 
-```yaml
-environment:
-  - INITIAL_MEMORY=8G
-  - MAXIMUM_MEMORY=12G
-  - JAVA_OPTS=-XX:+UseG1GC -XX:MaxGCPauseMillis=200 ...
-```
+Adjust based on your system RAM:
 
-Farklı RAM yapılandırmaları için:
-
-| Toplam RAM | INITIAL_MEMORY | MAXIMUM_MEMORY |
+| System RAM | INITIAL_MEMORY | MAXIMUM_MEMORY |
 |------------|----------------|----------------|
 | 8GB | 2G | 4G |
 | 16GB | 8G | 12G |
 | 32GB | 16G | 24G |
 | 64GB | 32G | 48G |
 
-## 📊 Kullanım
+> **Rule of thumb**: Use 50-75% of total RAM for JVM heap
 
-### Temel Docker Komutları
+## 📊 Performance Optimizations
 
-```powershell
-# Container'ı başlat
+### Pre-configured Optimizations
+
+✅ **JVM Tuning**
+- G1 Garbage Collector
+- Optimized heap size
+- Low-latency GC pauses
+
+✅ **Extensions**
+- JAI-EXT (raster processing)
+- Pyramid plugin (large rasters)
+- Image Mosaic JDBC
+
+✅ **Caching**
+- GeoWebCache enabled
+- Tile caching ready
+- HTTP compression
+
+✅ **Control Flow**
+- Request throttling
+- Resource limits
+- Connection pooling ready
+
+### Enable Tile Caching (Recommended)
+
+For optimal performance, enable GeoWebCache for your layers:
+
+1. Login to GeoServer
+2. Go to **Layers** → Select your layer
+3. **Tile Caching** tab → "Create a cached layer"
+4. Select gridsets (EPSG:4326, EPSG:3857)
+5. **Save**
+
+**Expected improvement**: 10-50ms response time (vs 200-500ms uncached)
+
+## 🔧 Management
+
+### Docker Commands
+
+```bash
+# Start
 docker-compose up -d
 
-# Container'ı durdur
+# Stop
 docker-compose stop
 
-# Container'ı yeniden başlat
+# Restart
 docker-compose restart
 
-# Logları görüntüle
+# View logs
 docker-compose logs -f
 
-# Container'ı kaldır
+# Remove (keeps data)
 docker-compose down
 
-# Container durumunu kontrol et
-docker-compose ps
+# Remove with volumes (WARNING: deletes data!)
+docker-compose down -v
 ```
 
-### Sağlık Kontrolü
-
-**Windows:**
-```powershell
-# Health check script'ini çalıştır
-.\scripts\windows\health-check.ps1
-
-# Admin şifresi ile REST API test et
-.\scripts\windows\health-check.ps1 -AdminPassword "YourPassword" -Verbose
-```
-
-**Linux:**
-```bash
-# Health check script'ini çalıştır
-./scripts/linux/health-check.sh
-
-# Admin şifresi ile test et
-ADMIN_PASSWORD="YourPassword" VERBOSE=true ./scripts/linux/health-check.sh
-```
-
-### Performans Testi
-
-**Windows:**
-```powershell
-# WMS servisini test et (100 istek, 10 concurrent)
-.\scripts\windows\performance-test.ps1 -TestType wms -Requests 100 -Concurrent 10
-
-# WFS servisi için
-.\scripts\windows\performance-test.ps1 -TestType wfs -Requests 50 -Concurrent 5
-```
-
-**Linux:**
-```bash
-# WMS servisini test et
-TEST_TYPE=wms REQUESTS=100 CONCURRENT=10 ./scripts/linux/performance-test.sh
-
-# WFS servisi için
-TEST_TYPE=wfs REQUESTS=50 CONCURRENT=5 ./scripts/linux/performance-test.sh
-```
-
-## 🚀 Performans Optimizasyonu
-
-Detaylı bilgi için [PERFORMANCE.md](docs/PERFORMANCE.md) dosyasına bakın.
-
-### Önemli Noktalar
-
-1. **JVM Heap**: Sistemdeki toplam RAM'in %50-75'i
-2. **G1GC**: Düşük gecikme için G1 Garbage Collector kullanılır
-3. **SSD Depolama**: `D:\geoserver_data` mutlaka SSD üzerinde olmalı
-4. **Tile Cache**: GeoWebCache varsayılan olarak etkindir
-
-### Eklenti Kurulumu
-
-JAI-EXT gibi performans eklentileri için:
+### Health Check
 
 ```bash
-# .env dosyasına ekleyin
-STABLE_EXTENSIONS=jai-ext,imagemosaic-jdbc-plugin,pyramid-plugin
+# Quick check
+docker-compose exec geoserver curl -f http://localhost:8080/geoserver/web/
+
+# Detailed health
+docker-compose exec geoserver bash -c '
+  echo "=== GeoServer Health ==="
+  echo "Status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/geoserver/web/)"
+  echo "Memory: $(free -h | grep Mem | awk "{print \$3\"/\"\$2}")"
+  echo "Uptime: $(uptime -p)"
+'
 ```
 
-## 🔒 Güvenlik
+### Backup
 
-Detaylı bilgi için [SECURITY.md](docs/SECURITY.md) dosyasına bakın.
+```bash
+# Create backup
+docker-compose exec geoserver tar -czf /tmp/backup-$(date +%Y%m%d).tar.gz -C /opt/geoserver data_dir
 
-### Temel Güvenlik Adımları
+# Copy to host
+docker cp geoserver:/tmp/backup-$(date +%Y%m%d).tar.gz ./backups/
 
-1. **Admin Şifresini Değiştirin**
-   
-   İlk kurulumdan sonra GeoServer web arayüzünden:
-   - Security → Users, Groups, Roles
-   - Users → admin → Change Password
+# Automated backups
+# See scripts/backup.sh
+```
 
-2. **HTTPS Yapılandırması**
+### Performance Monitoring
 
-   ```powershell
-   # SSL sertifikası oluştur veya Let's Encrypt kullan
-   # docker-compose.yml'de 8443 portunu aktif edin
-   ```
+```bash
+# JVM memory usage
+docker-compose exec geoserver jstat -gcutil 1 1000 5
 
-3. **IP Kısıtlamaları**
+# Heap details
+docker-compose exec geoserver jmap -heap 1
 
-   GeoServer admin panel → Security → Service Security
+# Thread dump
+docker-compose exec geoserver jstack 1 > thread-dump.txt
 
-4. **Firewall Kuralları**
+# Container stats
+docker stats geoserver --no-stream
+```
 
-   ```powershell
-   # Sadece belirli IP'lerden erişime izin ver
-   New-NetFirewallRule -DisplayName "GeoServer HTTP" -Direction Inbound -LocalPort 8080 -Protocol TCP -Action Allow -RemoteAddress 192.168.1.0/24
-   ```
+## 📈 Monitoring Stack (Optional)
 
-## 📈 Monitoring
+Deploy Prometheus + Grafana for advanced monitoring:
 
-Detaylı bilgi için [MONITORING.md](docs/MONITORING.md) dosyasına bakın.
-
-### Monitoring Stack'i Başlatma
-
-```powershell
+```bash
 cd monitoring
 docker-compose -f docker-compose.monitoring.yml up -d
 ```
 
-### Erişim
+Access:
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **Prometheus**: http://localhost:9090
+- **cAdvisor**: http://localhost:8081
 
-- **Grafana**: [http://localhost:3000](http://localhost:3000) (admin/admin)
-- **Prometheus**: [http://localhost:9090](http://localhost:9090)
-- **cAdvisor**: [http://localhost:8081](http://localhost:8081)
+## 🔒 Security
 
-### Metriklerin İzlenmesi
+### Essential Security Steps
 
-```powershell
-# Container kaynak kullanımı
-docker stats geoserver
+1. **Change Admin Password**
+   - GeoServer UI → Security → Users → admin → Change Password
 
-# JVM metrikleri (JConsole ile)
-jconsole localhost:8080
-```
+2. **Configure HTTPS** (Production)
+   - Use reverse proxy (Nginx/Apache)
+   - Or configure Tomcat SSL in docker-compose.yml
 
-## 💾 Yedekleme ve Kurtarma
+3. **IP Restrictions**
+   - GeoServer → Security → Service Security
+   - Or use firewall rules
 
-### Otomatik Yedekleme
+4. **Data Access Control**
+   - Configure layer-level security
+   - Use role-based access control (RBAC)
 
-**Windows:**
-```powershell
-# Sıkıştırılmış yedek oluştur (varsayılan)
-.\scripts\windows\backup.ps1
+See [docs/SECURITY.md](docs/SECURITY.md) for detailed security hardening.
 
-# Container'ı durdurup yedek al
-.\scripts\windows\backup.ps1 -StopContainer
+## 📚 Documentation
 
-# 60 günlük retention
-.\scripts\windows\backup.ps1 -RetentionDays 60
-```
+- [PERFORMANCE.md](docs/PERFORMANCE.md) - Performance tuning guide
+- [SECURITY.md](docs/SECURITY.md) - Security configuration
+- [MONITORING.md](docs/MONITORING.md) - Monitoring setup
+- [OPTIMIZATION_SUMMARY.md](docs/OPTIMIZATION_SUMMARY.md) - Quick optimization guide
 
-**Linux:**
+## 🔍 Troubleshooting
+
+### Container Won't Start
+
 ```bash
-# Sıkıştırılmış yedek oluştur
-./scripts/linux/backup.sh
-
-# Container'ı durdurup yedek al
-STOP_CONTAINER=true ./scripts/linux/backup.sh
-
-# 60 günlük retention
-RETENTION_DAYS=60 ./scripts/linux/backup.sh
-```
-
-### Manuel Yedekleme
-
-```powershell
-# Veri dizinini kopyala
-Copy-Item -Path "D:\geoserver_data" -Destination "D:\backups\geoserver_$(Get-Date -Format 'yyyyMMdd')" -Recurse
-```
-
-### Geri Yükleme
-
-```powershell
-# Container'ı durdur
-docker-compose stop
-
-# Yedekten geri yükle
-Remove-Item -Path "D:\geoserver_data\*" -Recurse -Force
-Expand-Archive -Path "D:\geoserver_backups\geoserver_backup_TIMESTAMP.zip" -DestinationPath "D:\geoserver_data"
-
-# Container'ı başlat
-docker-compose start
-```
-
-### Zamanlanmış Yedekleme
-### Container Başlamıyor
-
-```powershell
-# Logları kontrol edin
+# Check logs
 docker-compose logs geoserver
 
-# Port kullanımda mı?
-netstat -ano | findstr :8080
+# Check port conflicts
+netstat -tulpn | grep 8080  # Linux
+netstat -ano | findstr :8080  # Windows
 
-# Docker servisi çalışıyor mu?
-Get-Service com.docker.service
+# Verify Docker service
+docker ps
 ```
 
-### Yavaş Performans
+### Slow Performance
 
-```powershell
-# JVM heap kullanımını kontrol edin
-docker exec geoserver jstat -gc 1
+1. **Enable GeoWebCache** for layers (most effective!)
+2. Check JVM heap usage: `docker exec geoserver jstat -gc 1`
+3. Verify spatial indexes exist on data sources
+4. Review layer styling complexity
+5. Check disk I/O performance
 
-# Disk I/O
-Get-Counter "\PhysicalDisk(*)\Disk Transfers/sec"
-
-# CPU kullanımı
-docker stats geoserver --no-stream
-```
-
-### Veri Kalıcı Değil
-
-```powershell
-# Volume mount'u kontrol edin
-docker inspect geoserver | findstr "Mounts" -A 10
-
-# Veri dizini var mı?
-Test-Path "D:\geoserver_data"
-```
-
-### Bağlantı Hataları
-
-```powershell
-# GeoServer'a erişim testi
-curl http://localhost:8080/geoserver/web/
-
-# Container içinden test
-docker exec geoserver curl http://localhost:8080/geoserver/web/
-
-# Firewall kuralları
-Get-NetFirewallRule | Where-Object {$_.DisplayName -like "*8080*"}
-```
-
-## 📚 İleri Seviye
-
-### Eklenti Yönetimi
+### Data Not Persisting
 
 ```bash
-# .env dosyasına ekleyin
-STABLE_EXTENSIONS=wps-extension,css-plugin,importer-plugin,querylayer-plugin
+# Verify volume mount
+docker inspect geoserver | grep Mounts
 
-# Container'ı yeniden başlatın
-docker-compose up -d
+# Check data directory
+docker-compose exec geoserver ls -la /opt/geoserver/data_dir/
 ```
 
-### Cluster Kurulumu
+## 🎯 Performance Benchmarks
 
-Multiple GeoServer instances için `docker-compose.yml` dosyasını genişletin ve load balancer ekleyin.
+Expected performance with optimizations:
 
-### PostGIS Entegrasyonu
+| Operation | Target | Excellent |
+|-----------|--------|-----------|
+| GetCapabilities | <200ms | <100ms |
+| GetMap (cached) | <50ms | <20ms |
+| GetMap (uncached) | <500ms | <200ms |
+| GetFeature (100) | <300ms | <150ms |
+| Throughput | >50 req/s | >100 req/s |
+
+## 🛠️ Advanced Configuration
+
+### Add PostGIS Backend
 
 ```yaml
-# docker-compose.yml'ye ekleyin
+# Add to docker-compose.yml
 services:
   postgis:
     image: postgis/postgis:latest
@@ -398,19 +279,82 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgis-data:/var/lib/postgresql/data
+    networks:
+      - geoserver-network
+
+volumes:
+  postgis-data:
 ```
 
-## 🤝 Katkıda Bulunma
+### Cluster Setup
 
-İyileştirme önerileri ve hata raporları için issue açabilirsiniz.
+For high-availability:
+1. Multiple GeoServer instances
+2. Load balancer (Nginx/HAProxy)
+3. Shared data directory (NFS/S3)
+4. Database-backed catalog
 
-## 📄 Lisans
+### Custom Extensions
 
-Bu proje MIT lisansı altında sunulmaktadır.
+Add extensions in `.env`:
 
-## 🔗 Kaynaklar
+```bash
+STABLE_EXTENSIONS=jai-ext,pyramid-plugin,wps-extension,css-plugin,importer-plugin
+```
 
-- [GeoServer Resmi Dokümantasyon](https://docs.geoserver.org/)
+## 📦 Project Structure
+
+```
+geoserver-stack/
+├── docker-compose.yml           # Main configuration
+├── .env.example                 # Environment template
+├── .gitignore                   # Git ignore rules
+├── README.md                    # This file
+├── config/                      # Custom configurations
+├── geoserver_data/              # Persistent data (auto-created)
+├── backups/                     # Backup storage
+├── docs/                        # Documentation
+│   ├── PERFORMANCE.md
+│   ├── SECURITY.md
+│   ├── MONITORING.md
+│   └── OPTIMIZATION_SUMMARY.md
+├── monitoring/                  # Monitoring stack
+│   ├── docker-compose.monitoring.yml
+│   ├── prometheus.yml
+│   └── grafana/
+└── scripts/                     # Management scripts
+    ├── README.md
+    ├── backup.sh
+    ├── health-check.sh
+    └── performance-test.sh
+```
+
+## 🤝 Contributing
+
+Improvements and bug reports are welcome!
+
+## 📄 License
+
+MIT License
+
+## 🔗 Resources
+
+- [GeoServer Documentation](https://docs.geoserver.org/)
 - [Kartoza Docker GeoServer](https://github.com/kartoza/docker-geoserver)
-- [Docker Dokümantasyon](https://docs.docker.com/)
-- [GeoServer Performance Tuning](https://docs.geoserver.org/stable/en/user/production/index.html)
+- [GeoWebCache](https://www.geowebcache.org/)
+- [Performance Tuning Guide](https://docs.geoserver.org/stable/en/user/production/)
+
+## ⚡ Quick Performance Tips
+
+1. ✅ **Enable GeoWebCache** for all published layers
+2. ✅ **Use spatial indexes** on all geometry columns
+3. ✅ **Set scale dependencies** for complex layers
+4. ✅ **Optimize SLD styling** (avoid complex symbology)
+5. ✅ **Use connection pooling** for data sources
+6. ✅ **Enable HTTP compression** (already configured)
+7. ✅ **Monitor JVM memory** regularly
+8. ✅ **Set up regular backups** (use provided scripts)
+
+---
+
+**GeoServer Stack** - Production-ready GeoServer in minutes 🚀

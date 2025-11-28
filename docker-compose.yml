@@ -1,6 +1,6 @@
 services:
   geoserver:
-    image: kartoza/geoserver:latest
+    image: kartoza/geoserver:2.25.2
     container_name: geoserver
     restart: unless-stopped
 
@@ -9,8 +9,8 @@ services:
       - "8443:8443"
 
     volumes:
-      # Persistent data directory on SSD
-      - D:\geoserver_data:/opt/geoserver/data_dir
+      # Persistent data directory
+      - ./geoserver_data:/opt/geoserver/data_dir
       # Optional: Custom configuration files
       - ./config:/opt/geoserver/config:ro
 
@@ -32,24 +32,42 @@ services:
       - MAX_FILTER_RULES=${MAX_FILTER_RULES:-20}
       - OPTIMIZE_LINE_WIDTH=${OPTIMIZE_LINE_WIDTH:-false}
       - FOOTPRINTS_DATA_DIR=/opt/footprints_dir
-      - GEOWEBCACHE_CACHE_DIR=/opt/geoserver/data_dir/gwc
 
       # Disable sample data loading
       - SAMPLE_DATA=${SAMPLE_DATA:-false}
 
-      # Stable extensions (comma-separated)
-      - STABLE_EXTENSIONS=${STABLE_EXTENSIONS:-}
+      # Performance Extensions (JAI-EXT, Image Mosaic, Pyramid)
+      - STABLE_EXTENSIONS=${STABLE_EXTENSIONS:-jai-ext,pyramid-plugin,imagemosaic-jdbc-plugin}
 
-      # Community extensions (comma-separated)
+      # Community extensions
       - COMMUNITY_EXTENSIONS=${COMMUNITY_EXTENSIONS:-}
 
       # Tomcat settings
       - HTTP_PORT=8080
       - HTTP_PROXY_NAME=${HTTP_PROXY_NAME:-}
       - HTTP_PROXY_PORT=${HTTP_PROXY_PORT:-}
-      - HTTP_REDIRECT_PORT=${HTTP_REDIRECT_PORT:-}
+      - HTTP_REDIRECT_PORT=${HTTP_REDIRECT_PORT:-8443}
       - HTTP_CONNECTION_TIMEOUT=${HTTP_CONNECTION_TIMEOUT:-20000}
       - HTTP_COMPRESSION=${HTTP_COMPRESSION:-on}
+
+      # Tomcat thread optimization
+      - TOMCAT_EXTRAS=-Dorg.apache.tomcat.util.threads.TaskThreadFactory.THREAD_PRI=7
+
+      # Additional JVM tuning
+      - CATALINA_OPTS=-server -Djava.awt.headless=true -Dfile.encoding=UTF-8
+
+      # Control Flow settings (request throttling)
+      - CONTROL_FLOW_ENABLED=${CONTROL_FLOW_ENABLED:-true}
+      - OWS_REQUEST_MAX_TIME=${OWS_REQUEST_MAX_TIME:-60}
+      - OWS_REQUEST_TIMEOUT=${OWS_REQUEST_TIMEOUT:-60}
+
+      # Image processing optimizations
+      - USE_JAI_IMAGEREAD=false
+      - SUGGESTED_TILE_SIZE=512,512
+
+      # GeoWebCache optimizations
+      - GEOWEBCACHE_CACHE_DIR=/opt/geoserver/data_dir/gwc
+      - TILE_CACHE_DIR=/opt/geoserver/data_dir/gwc
 
       # Timezone
       - TZ=Europe/Istanbul

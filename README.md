@@ -157,22 +157,42 @@ docker-compose ps
 
 ### Sağlık Kontrolü
 
+**Windows:**
 ```powershell
 # Health check script'ini çalıştır
-.\scripts\health-check.ps1
+.\scripts\windows\health-check.ps1
 
 # Admin şifresi ile REST API test et
-.\scripts\health-check.ps1 -AdminPassword "YourPassword" -Verbose
+.\scripts\windows\health-check.ps1 -AdminPassword "YourPassword" -Verbose
+```
+
+**Linux:**
+```bash
+# Health check script'ini çalıştır
+./scripts/linux/health-check.sh
+
+# Admin şifresi ile test et
+ADMIN_PASSWORD="YourPassword" VERBOSE=true ./scripts/linux/health-check.sh
 ```
 
 ### Performans Testi
 
+**Windows:**
 ```powershell
 # WMS servisini test et (100 istek, 10 concurrent)
-.\scripts\performance-test.ps1 -TestType wms -Requests 100 -Concurrent 10
+.\scripts\windows\performance-test.ps1 -TestType wms -Requests 100 -Concurrent 10
 
 # WFS servisi için
-.\scripts\performance-test.ps1 -TestType wfs -Requests 50 -Concurrent 5
+.\scripts\windows\performance-test.ps1 -TestType wfs -Requests 50 -Concurrent 5
+```
+
+**Linux:**
+```bash
+# WMS servisini test et
+TEST_TYPE=wms REQUESTS=100 CONCURRENT=10 ./scripts/linux/performance-test.sh
+
+# WFS servisi için
+TEST_TYPE=wfs REQUESTS=50 CONCURRENT=5 ./scripts/linux/performance-test.sh
 ```
 
 ## 🚀 Performans Optimizasyonu
@@ -256,15 +276,28 @@ jconsole localhost:8080
 
 ### Otomatik Yedekleme
 
+**Windows:**
 ```powershell
 # Sıkıştırılmış yedek oluştur (varsayılan)
-.\scripts\backup.ps1
+.\scripts\windows\backup.ps1
 
 # Container'ı durdurup yedek al
-.\scripts\backup.ps1 -StopContainer
+.\scripts\windows\backup.ps1 -StopContainer
 
 # 60 günlük retention
-.\scripts\backup.ps1 -RetentionDays 60
+.\scripts\windows\backup.ps1 -RetentionDays 60
+```
+
+**Linux:**
+```bash
+# Sıkıştırılmış yedek oluştur
+./scripts/linux/backup.sh
+
+# Container'ı durdurup yedek al
+STOP_CONTAINER=true ./scripts/linux/backup.sh
+
+# 60 günlük retention
+RETENTION_DAYS=60 ./scripts/linux/backup.sh
 ```
 
 ### Manuel Yedekleme
@@ -289,18 +322,6 @@ docker-compose start
 ```
 
 ### Zamanlanmış Yedekleme
-
-Windows Task Scheduler ile:
-
-```powershell
-# Task oluştur (her gün 02:00'de)
-$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File D:\Workspace\geoserver\scripts\backup.ps1"
-$trigger = New-ScheduledTaskTrigger -Daily -At 2am
-Register-ScheduledTask -TaskName "GeoServer Backup" -Action $action -Trigger $trigger -RunLevel Highest
-```
-
-## 🔍 Sorun Giderme
-
 ### Container Başlamıyor
 
 ```powershell

@@ -248,59 +248,6 @@ services:
     volumes:
       - ./alertmanager:/etc/alertmanager
     command:
-      - '--config.file=/etc/alertmanager/config.yml'
-    networks:
-      - monitoring-network
-```
-
-## 📊 Windows Performance Counters
-
-### Windows Exporter Kurulumu
-
-```powershell
-# Windows exporter indir
-Invoke-WebRequest -Uri https://github.com/prometheus-community/windows_exporter/releases/download/v0.25.1/windows_exporter-0.25.1-amd64.msi -OutFile windows_exporter.msi
-
-# Kur
-msiexec /i windows_exporter.msi ENABLED_COLLECTORS="cpu,cs,logical_disk,net,os,system,memory"
-
-# Servis kontrolü
-Get-Service windows_exporter
-```
-
-### Prometheus Config
-
-`monitoring/prometheus.yml`:
-
-```yaml
-scrape_configs:
-  - job_name: 'windows'
-    static_configs:
-      - targets: ['host.docker.internal:9182']
-    scrape_interval: 30s
-```
-
-### Queries
-
-```promql
-# CPU usage
-100 - (avg by (instance) (rate(windows_cpu_time_total{mode="idle"}[5m])) * 100)
-
-# Memory available
-windows_os_physical_memory_free_bytes / 1024 / 1024 / 1024
-
-# Disk space
-windows_logical_disk_free_bytes{volume="D:"} / 1024 / 1024 / 1024
-```
-
-## 📱 Custom Monitoring Scripts
-
-## 📊 Log Analizi
-
-### GeoServer Log Monitoring
-
-```powershell
-# Error log counter
 docker exec geoserver grep -c "ERROR" /opt/geoserver/data_dir/logs/geoserver.log
 
 # Warning counter

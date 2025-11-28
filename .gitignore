@@ -1,0 +1,43 @@
+# Environment variables (contains sensitive data)
+.env
+
+# Data directory
+data/
+geoserver_data/
+
+# Logs
+*.log
+logs/
+
+# Backups
+backups/
+*.tar.gz
+*.zip
+
+# Monitoring data
+monitoring/data/
+monitoring/prometheus/data/
+monitoring/grafana/data/
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# SSL Certificates (should be managed separately)
+*.key
+*.crt
+*.pem
+ssl/

@@ -1,0 +1,69 @@
+services:
+  geoserver:
+    image: kartoza/geoserver:latest
+    container_name: geoserver
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+
+    volumes:
+      # Persistent data directory on SSD
+      - D:\geoserver_data:/opt/geoserver/data_dir
+      # Optional: Custom configuration files
+      - ./config:/opt/geoserver/config:ro
+
+    environment:
+      # Admin credentials
+      - GEOSERVER_ADMIN_USER=${GEOSERVER_ADMIN_USER:-admin}
+      - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD}
+
+      # JVM Memory Settings (Optimized for 16GB RAM)
+      - INITIAL_MEMORY=${INITIAL_MEMORY:-8G}
+      - MAXIMUM_MEMORY=${MAXIMUM_MEMORY:-12G}
+
+      # JVM Performance Tuning
+      - JAVA_OPTS=-Djava.awt.headless=true -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=70 -Dfile.encoding=UTF-8 -Djavax.servlet.request.encoding=UTF-8 -Djavax.servlet.response.encoding=UTF-8 -DGEOSERVER_CSRF_DISABLED=false -DPROXY_BASE_URL=${PROXY_BASE_URL:-http://localhost:8080/geoserver}
+
+      # GeoServer Optimizations
+      - GEOSERVER_DATA_DIR=/opt/geoserver/data_dir
+      - ENABLE_JSONP=${ENABLE_JSONP:-true}
+      - MAX_FILTER_RULES=${MAX_FILTER_RULES:-20}
+      - OPTIMIZE_LINE_WIDTH=${OPTIMIZE_LINE_WIDTH:-false}
+      - FOOTPRINTS_DATA_DIR=/opt/footprints_dir
+      - GEOWEBCACHE_CACHE_DIR=/opt/geoserver/data_dir/gwc
+
+      # Disable sample data loading
+      - SAMPLE_DATA=${SAMPLE_DATA:-false}
+
+      # Stable extensions (comma-separated)
+      - STABLE_EXTENSIONS=${STABLE_EXTENSIONS:-}
+
+      # Community extensions (comma-separated)
+      - COMMUNITY_EXTENSIONS=${COMMUNITY_EXTENSIONS:-}
+
+      # Tomcat settings
+      - HTTP_PORT=8080
+      - HTTP_PROXY_NAME=${HTTP_PROXY_NAME:-}
+      - HTTP_PROXY_PORT=${HTTP_PROXY_PORT:-}
+      - HTTP_REDIRECT_PORT=${HTTP_REDIRECT_PORT:-}
+      - HTTP_CONNECTION_TIMEOUT=${HTTP_CONNECTION_TIMEOUT:-20000}
+      - HTTP_COMPRESSION=${HTTP_COMPRESSION:-on}
+
+      # Timezone
+      - TZ=Europe/Istanbul
+
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/geoserver/web/ || exit 1" ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    networks:
+      - geoserver-network
+
+networks:
+  geoserver-network:
+    driver: bridge

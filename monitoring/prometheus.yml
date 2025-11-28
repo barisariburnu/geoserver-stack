@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'geoserver-monitor'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "alerts/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # GeoServer metrics (via JMX Exporter)
+  # Note: Requires JMX Exporter to be configured in GeoServer
+  - job_name: 'geoserver'
+    static_configs:
+      - targets: ['geoserver:8080']
+    metrics_path: '/geoserver/rest/about/status'
+    params:
+      format: ['json']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Docker container metrics (via cAdvisor)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+
+  # Windows node exporter (if installed)
+  # - job_name: 'windows'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:9182']
+  #   scrape_interval: 30s

@@ -26,7 +26,7 @@ services:
       - MAXIMUM_MEMORY=${MAXIMUM_MEMORY:-12G}
 
       # JVM Performance Tuning
-      - JAVA_OPTS=-Djava.awt.headless=true -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=70 -Dfile.encoding=UTF-8 -Djavax.servlet.request.encoding=UTF-8 -Djavax.servlet.response.encoding=UTF-8 -DGEOSERVER_CSRF_DISABLED=false -DPROXY_BASE_URL=${PROXY_BASE_URL:-http://localhost:8080/geoserver}
+      - JAVA_OPTS=-Djava.awt.headless=true -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=70 -Dfile.encoding=UTF-8 -Djavax.servlet.request.encoding=UTF-8 -Djavax.servlet.response.encoding=UTF-8 -DGEOSERVER_CSRF_DISABLED=false -DPROXY_BASE_URL=${PROXY_BASE_URL}
 
       # GeoServer Optimizations
       - GEOSERVER_DATA_DIR=/opt/geoserver/data_dir
@@ -48,7 +48,7 @@ services:
       - HTTP_PORT=8080
       - HTTP_PROXY_NAME=${HTTP_PROXY_NAME:-}
       - HTTP_PROXY_PORT=${HTTP_PROXY_PORT:-}
-      - HTTP_REDIRECT_PORT=${HTTP_REDIRECT_PORT:-8443}
+      - HTTP_REDIRECT_PORT=${HTTP_REDIRECT_PORT:-80}
       - HTTP_CONNECTION_TIMEOUT=${HTTP_CONNECTION_TIMEOUT:-20000}
       - HTTP_COMPRESSION=${HTTP_COMPRESSION:-on}
 

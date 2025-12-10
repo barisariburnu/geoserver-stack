@@ -37,8 +37,9 @@ temp/
 *.tmp
 
 # SSL Certificates (should be managed separately)
+ssl/
+certs/
 *.key
 *.crt
 *.pem
 *.pfx
-ssl/

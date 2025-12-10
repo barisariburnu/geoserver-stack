@@ -1,78 +1,78 @@
 services:
   geoserver:
-    image: kartoza/geoserver:2.25.2
+    image: kartoza/geoserver:2.28.0
     container_name: geoserver
     restart: unless-stopped
-
     ports:
+      - "443:8443"
       - "8080:8080"
-      - "8443:8443"
-
-    volumes:
-      # Persistent data directory
-      - ./geoserver_data:/opt/geoserver/data_dir
-      # Optional: Custom configuration files
-      - ./config:/opt/geoserver/config:ro
-      # Custom SSL Keystore
-      - ./certificates/keystore.jks:/usr/local/tomcat/conf/keystore.jks
-
     environment:
+      SSL: "true"
+      PKCS12_PASSWORD: ${PKCS12_PASSWORD}
+      JKS_STORE_PASSWORD: ${JKS_STORE_PASSWORD}
+      JKS_KEY_PASSWORD: ${JKS_KEY_PASSWORD}
+      ALIAS_KEY: ${ALIAS_KEY}
+      HTTP_SCHEME: https
+      HTTPS_PROXY_PORT: "443"
+      HTTP_PROXY_NAME: ${HTTP_PROXY_NAME:-}
+      GEOSERVER_CONTEXT_ROOT: ${GEOSERVER_CONTEXT_ROOT}
+      PROXY_BASE_URL: ${PROXY_BASE_URL}
+
       # Admin credentials
-      - GEOSERVER_ADMIN_USER=${GEOSERVER_ADMIN_USER:-admin}
-      - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD}
-
-      # JVM Memory Settings (Optimized for 16GB RAM)
-      - INITIAL_MEMORY=${INITIAL_MEMORY:-8G}
-      - MAXIMUM_MEMORY=${MAXIMUM_MEMORY:-12G}
-
-      # JVM Performance Tuning
-      - JAVA_OPTS=-Djava.awt.headless=true -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=70 -Dfile.encoding=UTF-8 -Djavax.servlet.request.encoding=UTF-8 -Djavax.servlet.response.encoding=UTF-8 -DGEOSERVER_CSRF_DISABLED=false -DPROXY_BASE_URL=${PROXY_BASE_URL}
-
-      # GeoServer Optimizations
-      - GEOSERVER_DATA_DIR=/opt/geoserver/data_dir
-      - ENABLE_JSONP=${ENABLE_JSONP:-true}
-      - MAX_FILTER_RULES=${MAX_FILTER_RULES:-20}
-      - OPTIMIZE_LINE_WIDTH=${OPTIMIZE_LINE_WIDTH:-false}
-      - FOOTPRINTS_DATA_DIR=/opt/footprints_dir
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_ADMIN_USER}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_ADMIN_PASSWORD}
 
       # Disable sample data loading
-      - SAMPLE_DATA=${SAMPLE_DATA:-false}
+      SAMPLE_DATA: ${SAMPLE_DATA:-false}
+
+      # JVM Memory Settings (Optimized for 16GB RAM)
+      INITIAL_MEMORY: ${INITIAL_MEMORY:-8G}
+      MAXIMUM_MEMORY: ${MAXIMUM_MEMORY:-12G}
+
+      # JVM Performance Tuning
+      JAVA_OPTS: -Djava.awt.headless=true -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=70 -Dfile.encoding=UTF-8 -Djavax.servlet.request.encoding=UTF-8 -Djavax.servlet.response.encoding=UTF-8 -DGEOSERVER_CSRF_DISABLED=false -DPROXY_BASE_URL=${PROXY_BASE_URL}
+
+      # GeoServer Optimizations
+      GEOSERVER_DATA_DIR: /opt/geoserver/data_dir
+      ENABLE_JSONP: ${ENABLE_JSONP:-true}
+      MAX_FILTER_RULES: ${MAX_FILTER_RULES:-20}
+      OPTIMIZE_LINE_WIDTH: ${OPTIMIZE_LINE_WIDTH:-false}
+      FOOTPRINTS_DATA_DIR: /opt/footprints_dir
 
       # Performance Extensions (JAI-EXT, Image Mosaic, Pyramid)
-      - STABLE_EXTENSIONS=${STABLE_EXTENSIONS:-jai-ext,pyramid-plugin,imagemosaic-jdbc-plugin,gdal-plugin}
+      STABLE_EXTENSIONS: ${STABLE_EXTENSIONS:-jai-ext,pyramid-plugin,gdal-plugin}
 
       # Community extensions
-      - COMMUNITY_EXTENSIONS=${COMMUNITY_EXTENSIONS:-}
+      COMMUNITY_EXTENSIONS: ${COMMUNITY_EXTENSIONS:-imagemosaic-jdbc-plugin}
 
       # Tomcat settings
-      - HTTP_PORT=8080
-      - HTTP_PROXY_NAME=${HTTP_PROXY_NAME:-}
-      - HTTP_PROXY_PORT=${HTTP_PROXY_PORT:-}
-      - HTTP_REDIRECT_PORT=${HTTP_REDIRECT_PORT:-80}
-      - HTTP_CONNECTION_TIMEOUT=${HTTP_CONNECTION_TIMEOUT:-20000}
-      - HTTP_COMPRESSION=${HTTP_COMPRESSION:-on}
+      HTTP_PORT: 8080
+      HTTP_PROXY_PORT: ${HTTP_PROXY_PORT:-}
+      HTTP_REDIRECT_PORT: ${HTTP_REDIRECT_PORT:-80}
+      HTTP_CONNECTION_TIMEOUT: ${HTTP_CONNECTION_TIMEOUT:-20000}
+      HTTP_COMPRESSION: ${HTTP_COMPRESSION:-on}
 
       # Tomcat thread optimization
-      - TOMCAT_EXTRAS=-Dorg.apache.tomcat.util.threads.TaskThreadFactory.THREAD_PRI=7
+      TOMCAT_EXTRAS: -Dorg.apache.tomcat.util.threads.TaskThreadFactory.THREAD_PRI=7
 
       # Additional JVM tuning
-      - CATALINA_OPTS=-server -Djava.awt.headless=true -Dfile.encoding=UTF-8
+      CATALINA_OPTS: -server -Djava.awt.headless=true -Dfile.encoding=UTF-8
 
       # Control Flow settings (request throttling)
-      - CONTROL_FLOW_ENABLED=${CONTROL_FLOW_ENABLED:-true}
-      - OWS_REQUEST_MAX_TIME=${OWS_REQUEST_MAX_TIME:-60}
-      - OWS_REQUEST_TIMEOUT=${OWS_REQUEST_TIMEOUT:-60}
+      CONTROL_FLOW_ENABLED: ${CONTROL_FLOW_ENABLED:-true}
+      OWS_REQUEST_MAX_TIME: ${OWS_REQUEST_MAX_TIME:-60}
+      OWS_REQUEST_TIMEOUT: ${OWS_REQUEST_TIMEOUT:-60}
 
       # Image processing optimizations
-      - USE_JAI_IMAGEREAD=false
-      - SUGGESTED_TILE_SIZE=512,512
-
-      # GeoWebCache optimizations
-      - GEOWEBCACHE_CACHE_DIR=/opt/geoserver/data_dir/gwc
-      - TILE_CACHE_DIR=/opt/geoserver/data_dir/gwc
-
-      # Timezone
-      - TZ=Europe/Istanbul
+      USE_JAI_IMAGEREAD: false
+      SUGGESTED_TILE_SIZE: 512,512
+      GEOWEBCACHE_CACHE_DIR: /opt/geoserver/data_dir/gwc
+      TILE_CACHE_DIR: /opt/geoserver/data_dir/gwc
+      TZ: Europe/Istanbul
+    volumes:
+      - ${CERTS_DIR}:/etc/certs
+      - ./geoserver_data:/opt/geoserver/data_dir
+      - ./config:/opt/geoserver/config:ro
 
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8080/geoserver/web/ || exit 1" ]
@@ -81,25 +81,6 @@ services:
       retries: 3
       start_period: 60s
 
-    networks:
-      - geoserver-network
-
-  nginx:
-    image: nginx:latest
-    container_name: geoserver-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - PFX_PASS=${PFX_PASS}
-      - DOMAIN_NAME=${DOMAIN_NAME}
-    volumes:
-      - ./nginx/templates:/etc/nginx/templates:ro
-      - ./certificates:/etc/nginx/certs
-      - ./scripts/convert_certs.sh:/docker-entrypoint.d/40-convert-certs.sh:ro
-    depends_on:
-      - geoserver
     networks:
       - geoserver-network
 

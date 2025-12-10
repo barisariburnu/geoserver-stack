@@ -43,6 +43,7 @@ services:
       - COMMUNITY_EXTENSIONS=${COMMUNITY_EXTENSIONS:-}
 
       # Tomcat settings
+      - SSL=true
       - HTTP_PORT=8080
       - HTTP_PROXY_NAME=${HTTP_PROXY_NAME:-}
       - HTTP_PROXY_PORT=${HTTP_PROXY_PORT:-}
